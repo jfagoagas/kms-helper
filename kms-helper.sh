@@ -11,10 +11,18 @@ ENV="${3}"
 OUTPUT_FORMAT="text"
 AWS_REGION="eu-west-1"
 CONFIG_PATH="./kms-helper.config"
+AWS_CLI="aws"
 
 usage() {
     echo "Usage: ./kms-helper.sh <encrypt/decrypt> <plaintext/encrypted> <account>"
     exit 1
+}
+
+checkAWSCLI() {
+    if ! command -v "${AWS_CLI}"
+    then
+        echo "AWS CLI not found, please check your PATH or install it"
+    fi
 }
 
 loadAWSconfig() {
@@ -27,12 +35,12 @@ loadAWSconfig() {
 
 encrypt() {
     PLAINTEXT=$(echo -n "${SECRET}" | base64)
-    ENCRYPT=$(aws kms encrypt --key-id "${KEY}" --plaintext "${PLAINTEXT}" --output "${OUTPUT_FORMAT}" --region "${AWS_REGION}" --profile "${PROFILE}" --query "${QUERY}")
+    ENCRYPT=$(${AWS_CLI} kms encrypt --key-id "${KEY}" --plaintext "${PLAINTEXT}" --output "${OUTPUT_FORMAT}" --region "${AWS_REGION}" --profile "${PROFILE}" --query "${QUERY}")
     echo "${ENCRYPT}"
 }
 
 decrypt() {
-    DECRYPT=$(aws kms decrypt --key-id "${KEY}" --ciphertext-blob "${SECRET}" --output "${OUTPUT_FORMAT}" --region "${AWS_REGION}" --profile "${PROFILE}" --query "${QUERY}" | base64 -D)
+    DECRYPT=$(${AWS_CLI} kms decrypt --key-id "${KEY}" --ciphertext-blob "${SECRET}" --output "${OUTPUT_FORMAT}" --region "${AWS_REGION}" --profile "${PROFILE}" --query "${QUERY}" | base64 -D)
     echo "${DECRYPT}"
 }
 
@@ -78,6 +86,7 @@ selectOperation() {
     fi
 }
 
+checkAWSCLI
 loadAWSconfig
 checkSecret
 checkKMS
